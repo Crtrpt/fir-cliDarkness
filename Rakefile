@@ -1,4 +1,4 @@
-require 'bundler/gem_tasks'
+gerequire 'bundler/gem_tasks'
 require File.expand_path('../test/test_helper', __FILE__)
 
 desc 'Run the tests.'
