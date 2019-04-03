@@ -7,7 +7,7 @@ pipeline {
                     sh 'ruby -v'
                     sh 'echo 构建fir'
                     sh 'gem build fir-cli.gemspec'
-                    sh '安装fir'
+                    sh 'echo 安装fir'
                     sh 'gem install fir-cli-1.7.0.1.gem'
                  }
               }
