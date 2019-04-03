@@ -177,7 +177,8 @@ module FIR
     end
 
     def logger_info_app_short_and_qrcode
-      short = "#{fir_api[:domain]}/#{@fir_app_info[:short]}"
+
+      short = "#{fir_api[:domain]}/#{@fir_app_info[:short]}?release_id=#{@fir_app_info[:release_id]}"
 
       logger.info "Published succeed: #{short}"
 
