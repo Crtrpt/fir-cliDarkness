@@ -192,7 +192,7 @@ module FIR
     "msgtype": "markdown",
     "text": {
         "title": "#{@app_info[:name]}",
-        "markdown": "######{@dingding_desc}![app二维码](data:image/png;base64,#{Base64.encode64(File.read(open(qrcode_path)))})"
+        "markdown": "######{@dingding_desc}![app二维码](data:image/png;base64,#{Base64.strict_encode64(File.read(open(qrcode_path)))})"
     },
     "at": {
         "atMobiles": [
