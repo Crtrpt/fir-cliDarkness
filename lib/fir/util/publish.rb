@@ -9,14 +9,16 @@ module FIR
       logger_info_publishing_message
 
       @app_info = send("#{@file_type}_info", @file_path, full_info: true)
-      @user_info      = fetch_user_info(@token)
+      @user_info = fetch_user_info(@token)
       @uploading_info = fetch_uploading_info
-      @app_id         = @uploading_info[:id]
+      @app_id = @uploading_info[:id]
 
       upload_app
 
       logger_info_dividing_line
-      logger_info_app_short_and_qrcode
+      @qr_url = logger_info_app_short_and_qrcode
+
+      trigger_webhook_dingding(@qr_url)
 
       upload_mapping_file_with_publish(options)
 
@@ -27,14 +29,14 @@ module FIR
       user_info = fetch_user_info(@token)
 
       email = user_info.fetch(:email, '')
-      name  = user_info.fetch(:name, '')
+      name = user_info.fetch(:name, '')
 
       logger.info "Publishing app via #{name}<#{email}>......."
       logger_info_dividing_line
     end
 
     def upload_app
-      @icon_cert   = @uploading_info[:cert][:icon]
+      @icon_cert = @uploading_info[:cert][:icon]
       @binary_cert = @uploading_info[:cert][:binary]
 
       upload_app_icon unless @app_info[:icons].blank?
@@ -68,58 +70,58 @@ module FIR
     end
 
     def uploading_icon_info
-      large_icon_path = @app_info[:icons].max_by { |f| File.size(f) }
+      large_icon_path = @app_info[:icons].max_by {|f| File.size(f)}
       @uncrushed_icon_path = convert_icon(large_icon_path)
       {
-        key:   @icon_cert[:key],
-        token: @icon_cert[:token],
-        file:  File.new(@uncrushed_icon_path, 'rb'),
-        'x:is_converted' => '1'
+          key: @icon_cert[:key],
+          token: @icon_cert[:token],
+          file: File.new(@uncrushed_icon_path, 'rb'),
+          'x:is_converted' => '1'
       }
     end
 
     def icon_information
       {
-        key:   @icon_cert[:key],
-        token: @icon_cert[:token],
-        origin: 'fir-cli',
-        parent_id: @app_id,
-        fsize: File.size(@uncrushed_icon_path),
-        fname: 'blob'
+          key: @icon_cert[:key],
+          token: @icon_cert[:token],
+          origin: 'fir-cli',
+          parent_id: @app_id,
+          fsize: File.size(@uncrushed_icon_path),
+          fname: 'blob'
       }
     end
 
     def binary_information
       {
-        build: @app_info[:build],
-        fname: File.basename(@file_path),
-        key: @binary_cert[:key],
-        name: @app_info[:display_name] || @app_info[:name],
-        origin: 'fir-cli',
-        parent_id: @app_id,
-        release_tag: 'develop',
-        fsize: File.size(@file_path),
-        release_type: @app_info[:release_type],
-        distribution_name: @app_info[:distribution_name],
-        token: @binary_cert[:token],
-        version: @app_info[:version],
-        changelog: @changelog,
-        user_id: @user_info[:id]
-      }.reject { |x| x.nil? || x == '' }
+          build: @app_info[:build],
+          fname: File.basename(@file_path),
+          key: @binary_cert[:key],
+          name: @app_info[:display_name] || @app_info[:name],
+          origin: 'fir-cli',
+          parent_id: @app_id,
+          release_tag: 'develop',
+          fsize: File.size(@file_path),
+          release_type: @app_info[:release_type],
+          distribution_name: @app_info[:distribution_name],
+          token: @binary_cert[:token],
+          version: @app_info[:version],
+          changelog: @changelog,
+          user_id: @user_info[:id]
+      }.reject {|x| x.nil? || x == ''}
     end
 
     def uploading_binary_info
       {
-        key:   @binary_cert[:key],
-        token: @binary_cert[:token],
-        file:  File.new(@file_path, 'rb'),
-        # Custom variables
-        'x:name'              => @app_info[:display_name] || @app_info[:name],
-        'x:build'             => @app_info[:build],
-        'x:version'           => @app_info[:version],
-        'x:changelog'         => @changelog,
-        'x:release_type'      => @app_info[:release_type],
-        'x:distribution_name' => @app_info[:distribution_name]
+          key: @binary_cert[:key],
+          token: @binary_cert[:token],
+          file: File.new(@file_path, 'rb'),
+          # Custom variables
+          'x:name' => @app_info[:display_name] || @app_info[:name],
+          'x:build' => @app_info[:build],
+          'x:version' => @app_info[:version],
+          'x:changelog' => @changelog,
+          'x:release_type' => @app_info[:release_type],
+          'x:distribution_name' => @app_info[:distribution_name]
       }
     end
 
@@ -128,13 +130,13 @@ module FIR
 
       logger.info 'Updating devices info......'
 
-      post fir_api[:udids_url], key:       @binary_cert[:key],
-                                udids:     @app_info[:devices].join(','),
-                                api_token: @token
-      end
+      post fir_api[:udids_url], key: @binary_cert[:key],
+           udids: @app_info[:devices].join(','),
+           api_token: @token
+    end
 
     def update_app_info
-      update_info = { short: @short, passwd: @passwd, is_opened: @is_opened }.compact
+      update_info = {short: @short, passwd: @passwd, is_opened: @is_opened}.compact
 
       return if update_info.blank?
 
@@ -147,10 +149,10 @@ module FIR
       logger.info "Fetching #{@app_info[:identifier]}@fir.im uploading info......"
       logger.info "Uploading app: #{@app_info[:name]}-#{@app_info[:version]}(Build #{@app_info[:build]})"
 
-      post fir_api[:app_url], type:      @app_info[:type],
-                              bundle_id: @app_info[:identifier],
-                              manual_callback: true,
-                              api_token: @token
+      post fir_api[:app_url], type: @app_info[:type],
+           bundle_id: @app_info[:identifier],
+           manual_callback: true,
+           api_token: @token
     end
 
     def fetch_release_id
@@ -170,16 +172,43 @@ module FIR
 
       logger_info_blank_line
 
-      mapping options[:mappingfile], proj:    options[:proj],
-                                     build:   @app_info[:build],
-                                     version: @app_info[:version],
-                                     token:   @token
+      mapping options[:mappingfile], proj: options[:proj],
+              build: @app_info[:build],
+              version: @app_info[:version],
+              token: @token
+    end
+
+    def trigger_webhook_dingding(file_url)
+      if @dingding
+        qrcode_path = "#{File.dirname(@file_path)}/fir-#{@app_info[:name]}.png"
+        if @export_qrcode
+        else
+          FIR.generate_rqrcode(file_url, qrcode_path)
+        end
+
+        logger.info "dingding hook:#{file_url}"
+        @dingding_content = <<LongText
+{
+    "msgtype": "markdown",
+    "text": {
+        "title": "#{@app_info[:name]}"，
+        "text": "![screenshot](data:image/png;base64,#{Base64.encode64(File.read(open(file_url)))})"
+    },
+    "at": {
+        "atMobiles": [
+        ],
+        "isAtAll": false
+    }
+}
+LongText
+
+        post(config[:dingdingwebhook], data = JSON.parse(@dingding_content), header = {'Content-Type' => "application/json", 'charset' => "utf-8"})
+      end
     end
 
     def logger_info_app_short_and_qrcode
-    @app_info[]
-      short = "#{fir_api[:domain]}/#{@fir_app_info[:short]}?release_id=#{@app_uploaded_callback_data[:release_id]}"
 
+      short = "#{fir_api[:domain]}/#{@fir_app_info[:short]}?release_id=#{@app_uploaded_callback_data[:release_id]}"
       logger.info "Published succeed: #{short}"
 
       if @export_qrcode
@@ -188,18 +217,20 @@ module FIR
 
         logger.info "Local qrcode file: #{qrcode_path}"
       end
+      short
     end
 
     private
 
     def initialize_publish_options(args, options)
-      @file_path     = File.absolute_path(args.first.to_s)
-      @file_type     = File.extname(@file_path).delete('.')
-      @token         = options[:token] || current_token
-      @changelog     = read_changelog(options[:changelog]).to_s.to_utf8
-      @short         = options[:short].to_s
-      @passwd        = options[:password].to_s
-      @is_opened     = @passwd.blank? ? options[:open] : false
+      @file_path = File.absolute_path(args.first.to_s)
+      @file_type = File.extname(@file_path).delete('.')
+      @token = options[:token] || current_token
+      @changelog = read_changelog(options[:changelog]).to_s.to_utf8
+      @short = options[:short].to_s
+      @passwd = options[:password].to_s
+      @is_opened = @passwd.blank? ? options[:open] : false
+      @dingding = options[:dingding].to_s
       @export_qrcode = !!options[:qrcode]
     end
 
@@ -218,7 +249,7 @@ module FIR
     def convert_icon(origin_path)
       # 兼容性不太好, 蔽掉转化图标
       return origin_path
-      
+
       logger.info "Converting app's icon......"
 
       if @app_info[:type] == 'ios'

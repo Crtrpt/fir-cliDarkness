@@ -2,6 +2,7 @@
 
 module FIR
   class CLI < Thor
+    class_option :dingding,   type: :string,  aliases: '-D', desc: "dingding webhook"
     class_option :token,   type: :string,  aliases: '-T', desc: "User's API Token at fir.im"
     class_option :logfile, type: :string,  aliases: '-L', desc: 'Path to writable logfile'
     class_option :verbose, type: :boolean, aliases: '-V', desc: 'Show verbose', default: true
@@ -72,7 +73,7 @@ module FIR
     method_option :short,     type: :string,  aliases: '-s', desc: 'Set custom short link if publish to fir.im'
     method_option :name,      type: :string,  aliases: '-n', desc: 'Set custom apk name when builded'
     method_option :changelog, type: :string,  aliases: '-c', desc: 'Set changelog if publish to fir.im, support string/file'
-    method_option :qrcode,    type: :boolean, aliases: '-Q', desc: 'Generate qrcode'
+    method_option :qrcode,    type: :string, aliases: '-Q', desc: 'Generate qrcode'
     method_option :open,      type: :boolean, desc: 'true/false if open for everyone, the default is: true', default: true
     method_option :password,  type: :string,  desc: 'Set password for app'
     def build_apk(*args)
@@ -107,7 +108,7 @@ module FIR
     method_option :short,       type: :string,  aliases: '-s', desc: 'Set custom short link'
     method_option :changelog,   type: :string,  aliases: '-c', desc: 'Set changelog'
     method_option :qrcode,      type: :boolean, aliases: '-Q', desc: 'Generate qrcode'
-    
+    method_option :dingding,      type: :boolean, aliases: '-D', desc: 'trigger dingding'
     method_option :mappingfile, type: :string,  aliases: '-m', desc: 'App mapping file'
     method_option :proj,        type: :string,  aliases: '-P', desc: 'Project id in BugHD.com if upload app mapping file'
     method_option :open,        type: :boolean, desc: 'true/false if open for everyone'
@@ -125,6 +126,15 @@ module FIR
 
       token = options[:token] || args.first || ask('Please enter your fir.im API Token:', :white, echo: true)
       FIR.login(token)
+    end
+
+    desc 'dingding', 'dingding webhook (aliases: `d`)'
+    map 'd' => :dingding
+    def dingding(*args)
+      prepare :dingding
+
+      webhook = options[:dingding] || args.first || ask('Please enter your dingding webhook:', :white, echo: true)
+      FIR.dingding(webhook)
     end
 
     desc 'me', 'Show current user info if user is logined.'

@@ -6,6 +6,7 @@ require_relative './util/parser/apk'
 require_relative './util/parser/ipa'
 require_relative './util/parser/pngcrush'
 require_relative './util/login'
+require_relative './util/dingding'
 require_relative './util/me'
 require_relative './util/info'
 require_relative './util/build_common'
@@ -22,6 +23,7 @@ module FIR
       include FIR::Http
       include FIR::Config
       include FIR::Login
+      include FIR::DingDing
       include FIR::Me
       include FIR::Info
       include FIR::BuildCommon
@@ -53,6 +55,12 @@ module FIR
 
         logger.error 'Unsupported file type'
         exit 1
+      end
+
+      def check_dingding_cannot_be_blank(webhook)
+        return unless webhook.blank?
+
+        logger.error 'DingDing webhook can not be blank'
       end
 
       def check_token_cannot_be_blank(token)
