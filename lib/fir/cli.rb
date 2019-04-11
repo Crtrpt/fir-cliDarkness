@@ -109,6 +109,7 @@ module FIR
     method_option :changelog,   type: :string,  aliases: '-c', desc: 'Set changelog'
     method_option :qrcode,      type: :boolean, aliases: '-Q', desc: 'Generate qrcode'
     method_option :dingding,      type: :boolean, aliases: '-D', desc: 'trigger dingding'
+    method_option :dingdingdesc,      type: :string, aliases: '-d', desc: 'dingding desc'
     method_option :mappingfile, type: :string,  aliases: '-m', desc: 'App mapping file'
     method_option :proj,        type: :string,  aliases: '-P', desc: 'Project id in BugHD.com if upload app mapping file'
     method_option :open,        type: :boolean, desc: 'true/false if open for everyone'
