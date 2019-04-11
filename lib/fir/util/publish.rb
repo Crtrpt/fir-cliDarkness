@@ -18,7 +18,7 @@ module FIR
       logger_info_dividing_line
       @qr_url = logger_info_app_short_and_qrcode
 
-      trigger_webhook_dingding(@qr_url)
+      trigger_webhook_dingding(@qr_url, options)
 
       upload_mapping_file_with_publish(options)
 
@@ -178,7 +178,7 @@ module FIR
               token: @token
     end
 
-    def trigger_webhook_dingding(file_url)
+    def trigger_webhook_dingding(file_url, options)
       if @dingding
         qrcode_path = "#{File.dirname(@file_path)}/fir-#{@app_info[:name]}.png"
         if @export_qrcode
@@ -186,22 +186,21 @@ module FIR
           FIR.generate_rqrcode(file_url, qrcode_path)
         end
 
-        logger.info "dingding hook:#{file_url}"
+        logger.info "dingding hook:#{config[:dingdingwebhook]}"
         @dingding_content = <<LongText
 {
     "msgtype": "markdown",
     "text": {
-        "title": "#{@app_info[:name]}"，
-        "text": "![screenshot](data:image/png;base64,#{Base64.encode64(File.read(open(file_url)))})"
+        "title": "#{@app_info[:name]}",
+        "markdown": "######{@dingding_desc}![app二维码](data:image/png;base64,#{Base64.encode64(File.read(open(qrcode_path)))})"
     },
     "at": {
         "atMobiles": [
         ],
-        "isAtAll": false
+        "isAtAll": true
     }
 }
 LongText
-
         post(config[:dingdingwebhook], data = JSON.parse(@dingding_content), header = {'Content-Type' => "application/json", 'charset' => "utf-8"})
       end
     end
@@ -232,6 +231,7 @@ LongText
       @is_opened = @passwd.blank? ? options[:open] : false
       @dingding = options[:dingding].to_s
       @export_qrcode = !!options[:qrcode]
+      @dingding_desc = options[:dingdingdesc].to_s
     end
 
     def read_changelog(changelog)
